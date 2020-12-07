@@ -159,3 +159,26 @@ func Test_Filter_strings(t *testing.T) {
 		t.Error("Should have val3 as third value")
 	}
 }
+
+func Test_Reduce(t *testing.T) {
+	collection := []string{"val1", "val2", "val3", "test"}
+
+	reducer := func (result interface{}, current interface{}) interface{} {
+		s := current.(string)
+		r := result.(string)
+
+		if len(r) == 0 {
+			r = s
+		} else {
+			r = r + "," + s
+		}
+
+		return r
+	}
+
+	result := Reduce(collection, reducer, "")
+
+	if result != "val1,val2,val3,test" {
+		t.Error("Should reduce the values by joining the strings", result)
+	}
+}

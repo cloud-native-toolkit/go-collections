@@ -89,3 +89,13 @@ func Index(collection interface{}, test interface{}) int {
 func Includes(collection interface{}, test interface{}) bool {
 	return Index(collection, test) >= 0
 }
+
+func Reduce(collection interface{}, fn func(result interface{}, current interface{}) interface{}, startValue interface{}) interface{} {
+	c := reflect.ValueOf(collection)
+
+	for i := 0; i < c.Len(); i++ {
+		startValue = fn(startValue, c.Index(i).Interface())
+	}
+
+	return startValue
+}
