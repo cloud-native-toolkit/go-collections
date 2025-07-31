@@ -1,14 +1,13 @@
 package go_collections
 
 import (
-	"reflect"
+	"slices"
 )
 
-func Any(collection interface{}, fn func (v interface{}) bool) bool {
-	c := reflect.ValueOf(collection)
-
-	for i := 0; i < c.Len(); i++ {
-		if fn(c.Index(i).Interface()) {
+// Any returns true if any element in the collection satisfies the provided predicate function, otherwise false.
+func Any[S ~[]E, E any](collection S, fn func(v E) bool) bool {
+	for _, value := range collection {
+		if fn(value) {
 			return true
 		}
 	}
@@ -16,15 +15,14 @@ func Any(collection interface{}, fn func (v interface{}) bool) bool {
 	return false
 }
 
-func All(collection interface{}, fn func (v interface{}) bool) bool {
-	c := reflect.ValueOf(collection)
-
-	if c.Len() == 0 {
+// All returns true if all elements in the collection satisfy the provided predicate function, otherwise false.
+func All[S ~[]E, E any](collection S, fn func(v E) bool) bool {
+	if len(collection) == 0 {
 		return false
 	}
 
-	for i := 0; i < c.Len(); i++ {
-		if !fn(c.Index(i).Interface()) {
+	for _, value := range collection {
+		if !fn(value) {
 			return false
 		}
 	}
@@ -32,70 +30,68 @@ func All(collection interface{}, fn func (v interface{}) bool) bool {
 	return true
 }
 
-func Map(collection interface{}, fn func(v interface{}) interface{}) interface{} {
-	c := reflect.ValueOf(collection)
+// Map applies the provided function fn to each element of the input slice collection and returns a new slice with transformed elements.
+func Map[S ~[]E, E any, R any](collection S, fn func(v E) R) []R {
 
-	if c.Len() == 0 {
-		return make([]interface{}, 0)
+	if len(collection) == 0 {
+		return []R{}
 	}
 
-	tempResult := make([]interface{}, 0)
-
-	for i := 0; i < c.Len(); i++ {
-		val := fn(c.Index(i).Interface())
-
-		tempResult = append(tempResult, val)
+	var result []R
+	for _, value := range collection {
+		result = append(result, fn(value))
 	}
 
-	tmpVal := tempResult[0]
-	typ := reflect.TypeOf(tmpVal)
-
-	result := reflect.MakeSlice(reflect.SliceOf(typ), 0, (c.Cap() + 1) * 2)
-
-	for i := 0; i < len(tempResult); i++ {
-		result = reflect.Append(result, reflect.ValueOf(tempResult[i]))
-	}
-
-	return result.Interface()
+	return result
 }
 
-func Filter(collection interface{}, fn func(v interface{}) bool) interface{} {
-	c := reflect.ValueOf(collection)
-	typ := reflect.TypeOf(collection).Elem()
+// Filter iterates over the provided collection and returns a new collection containing only the elements that satisfy fn.
+func Filter[S ~[]E, E any](collection S, fn func(v E) bool) S {
 
-	result := reflect.MakeSlice(reflect.SliceOf(typ), 0, (c.Cap() + 1) * 2)
-
-	for i := 0; i < c.Len(); i++ {
-		if fn(c.Index(i).Interface()) {
-			result = reflect.Append(result, c.Index(i))
-		}
+	deleteFn := func(v E) bool {
+		return !fn(v)
 	}
 
-	return result.Interface()
+	return slices.DeleteFunc(collection, deleteFn)
 }
 
-func Index(collection interface{}, test interface{}) int {
-	c := reflect.ValueOf(collection)
+// Index returns the index of the first occurrence of the test element in the collection or -1 if it is not found.
+//
+// Deprecated: Use slices.Index instead
+func Index[S ~[]E, E comparable](collection S, test E) int {
+	return slices.Index(collection, test)
+}
 
-	for i := 0; i < c.Len(); i++ {
-		if c.Index(i).Interface() == test {
-			return i
-		}
+// IndexFunc returns the index of the first element in the collection that satisfies the provided function.
+// It returns -1 if no element satisfies the function.
+//
+// Deprecated: Use slices.IndexFunc instead
+func IndexFunc[S ~[]E, E any](collection S, fn func(v E) bool) int {
+	return slices.IndexFunc(collection, fn)
+}
+
+// Includes checks if a specified element exists in the given slice. Returns true if the element is found, otherwise false.
+//
+// Deprecated: Use slices.Contains instead
+func Includes[S ~[]E, E comparable](collection S, test E) bool {
+	return slices.Contains(collection, test)
+}
+
+// IncludesFunc checks if any element in the collection satisfies the specified function condition and returns true if so.
+//
+// Deprecated: Use slices.ContainsFunc instead
+func IncludesFunc[S ~[]E, E any](collection S, fn func(v E) bool) bool {
+	return slices.ContainsFunc(collection, fn)
+}
+
+// Reduce iterates over a collection, applying a reducer function to combine elements into a single result.
+// The function takes a collection, a reducer function, and an initial value to accumulate the result.
+func Reduce[S ~[]E, E any, R any](collection S, fn func(result R, current E, c S, index int) R, startValue R) R {
+	result := startValue
+
+	for i, value := range collection {
+		result = fn(result, value, collection, i)
 	}
 
-	return -1
-}
-
-func Includes(collection interface{}, test interface{}) bool {
-	return Index(collection, test) >= 0
-}
-
-func Reduce(collection interface{}, fn func(result interface{}, current interface{}) interface{}, startValue interface{}) interface{} {
-	c := reflect.ValueOf(collection)
-
-	for i := 0; i < c.Len(); i++ {
-		startValue = fn(startValue, c.Index(i).Interface())
-	}
-
-	return startValue
+	return result
 }
