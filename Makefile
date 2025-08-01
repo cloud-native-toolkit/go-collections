@@ -10,7 +10,7 @@ GOPATH=$(GOBASE)/vendor:$(GOBASE) # You can remove or change the path after last
 GOBIN=$(GOBASE)/bin
 GOFILES=$(wildcard *.go)
 GOTESTS=$(shell find . -name "*_test.go" | grep -v vendor | xargs -I{} dirname {} | sed -E "s~[.]~${MODULE}~g")
-VERSION ?= v0.0.0
+VERSION ?= 0.1.0
 
 # Redirect error output to a file, so we can show it in development mode.
 STDERR=/tmp/.$(PROJECTNAME)-stderr.txt
